@@ -30,6 +30,7 @@
         // Função para carregar livros do Firebase
         function loadBooks() {
             const bookList = document.getElementById('bookList');
+            const bookCount = document.getElementById('bookCount');
             bookList.innerHTML = ''; // Limpa a lista antes de carregar
 
             // Obtendo os livros do Firebase
@@ -41,19 +42,16 @@
                     booksArray.push({ key: childSnapshot.key, ...bookData });
                 });
 
+                // Atualiza o contador de livros
+                bookCount.textContent = `${booksArray.length} livros`;
+
                 // Preenche a lista com os livros
                 booksArray.forEach((book) => {
                     const li = document.createElement('li');
-                    li.textContent = book.title || "Título não disponível"; // Verifica se o título está disponível
-
-                    // Link para download do livro
-                    const link = document.createElement('a');
-                    link.href = book.url;
-                    link.textContent = ' (Baixar Livro)';
-                    link.target = '_blank'; // Abre em nova aba
-                    link.download = book.title; // Sugere o nome do arquivo para download
-                    li.appendChild(link);
-
+                    li.innerHTML = `
+                        <strong>${book.title || "Título não disponível"}</strong>
+                        <a href="${book.url}" download="${book.title}"> (Baixar Livro)</a>
+                    `;
                     bookList.appendChild(li);
                 });
             });
@@ -78,6 +76,7 @@
                             set(newBookRef, {
                                 title: bookTitle,
                                 url: url,
+                                downloads: 0, // Inicializa os downloads como 0
                             }).then(() => {
                                 // Limpando os campos
                                 fileInput.value = '';
@@ -91,20 +90,19 @@
                 }
             });
 
-            // Função de pesquisa
+            // Função para pesquisar livros
             document.getElementById('search').addEventListener('input', (event) => {
-                const searchQuery = event.target.value.toLowerCase();  // Obtém o valor digitado e converte para minúsculas
+                const searchQuery = event.target.value.toLowerCase();
                 const bookList = document.getElementById('bookList');
-                const items = bookList.getElementsByTagName('li');  // Todos os <li> dos livros
+                const items = bookList.getElementsByTagName('li');
 
-                // Itera sobre todos os <li> na lista
                 for (let i = 0; i < items.length; i++) {
-                    const item = items[i];  // Pega cada <li>
-                    const title = item.textContent.toLowerCase();  // Texto do título do livro
+                    const item = items[i];
+                    const title = item.textContent.toLowerCase();
                     if (title.includes(searchQuery)) {
-                        item.style.display = '';  // Mostra o item se combinar com a pesquisa
+                        item.style.display = ''; // Mostrar item
                     } else {
-                        item.style.display = 'none';  // Esconde o item se não combinar
+                        item.style.display = 'none'; // Esconder item
                     }
                 }
             });
@@ -117,7 +115,10 @@
     <header>
         <h1>Nossa Biblioteca</h1>
         <p>Compartilhe e baixe livros gratuitamente!</p>
-        <div id="onlineCount">0 online</div> <!-- Contador de usuários online -->
+        <nav>
+          <div id="bookCount">0 livros</div> <!-- Contador de livros -->
+        </nav>
+       
     </header>
 
     <main>
