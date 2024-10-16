@@ -30,7 +30,6 @@
         // Função para carregar livros do Firebase
         function loadBooks() {
             const bookList = document.getElementById('bookList');
-            const bookCount = document.getElementById('bookCount');
             bookList.innerHTML = ''; // Limpa a lista antes de carregar
 
             // Obtendo os livros do Firebase
@@ -42,16 +41,19 @@
                     booksArray.push({ key: childSnapshot.key, ...bookData });
                 });
 
-                // Atualiza o contador de livros
-                bookCount.textContent = `${booksArray.length} livros`;
-
                 // Preenche a lista com os livros
                 booksArray.forEach((book) => {
                     const li = document.createElement('li');
-                    li.innerHTML = `
-                        <strong>${book.title || "Título não disponível"}</strong>
-                        <a href="${book.url}" download="${book.title}"> (Baixar Livro)</a>
-                    `;
+                    li.textContent = book.title || "Título não disponível"; // Verifica se o título está disponível
+
+                    // Link para download do livro
+                    const link = document.createElement('a');
+                    link.href = book.url;
+                    link.textContent = ' (Baixar Livro)';
+                    link.target = '_blank'; // Abre em nova aba
+                    link.download = book.title; // Sugere o nome do arquivo para download
+                    li.appendChild(link);
+
                     bookList.appendChild(li);
                 });
             });
@@ -59,9 +61,20 @@
 
         // Função para fazer upload de livros
         document.addEventListener('DOMContentLoaded', () => {
+            const fileInput = document.getElementById('fileInput');
+            const bookTitleInput = document.getElementById('bookTitle');
+
+            fileInput.addEventListener('change', () => {
+                const file = fileInput.files[0];
+                if (file) {
+                    // Extrair o nome do arquivo sem a extensão e definir como título
+                    const title = file.name.replace(/\.pdf$/, ""); // Remove a extensão
+                    bookTitleInput.value = title; // Define o título do livro
+                }
+            });
+
             document.getElementById('uploadButton').addEventListener('click', () => {
-                const fileInput = document.getElementById('fileInput');
-                const bookTitle = document.getElementById('bookTitle').value;
+                const bookTitle = bookTitleInput.value;
 
                 if (fileInput.files.length > 0 && bookTitle) {
                     const file = fileInput.files[0];
@@ -76,34 +89,16 @@
                             set(newBookRef, {
                                 title: bookTitle,
                                 url: url,
-                                downloads: 0, // Inicializa os downloads como 0
                             }).then(() => {
                                 // Limpando os campos
                                 fileInput.value = '';
-                                document.getElementById('bookTitle').value = '';
+                                bookTitleInput.value = '';
                                 loadBooks(); // Recarregar lista de livros
                             });
                         });
                     });
                 } else {
                     alert('Por favor, preencha todos os campos.');
-                }
-            });
-
-            // Função para pesquisar livros
-            document.getElementById('search').addEventListener('input', (event) => {
-                const searchQuery = event.target.value.toLowerCase();
-                const bookList = document.getElementById('bookList');
-                const items = bookList.getElementsByTagName('li');
-
-                for (let i = 0; i < items.length; i++) {
-                    const item = items[i];
-                    const title = item.textContent.toLowerCase();
-                    if (title.includes(searchQuery)) {
-                        item.style.display = ''; // Mostrar item
-                    } else {
-                        item.style.display = 'none'; // Esconder item
-                    }
                 }
             });
 
@@ -115,10 +110,7 @@
     <header>
         <h1>Nossa Biblioteca</h1>
         <p>Compartilhe e baixe livros gratuitamente!</p>
-        <nav>
-          <div id="bookCount">0 livros</div> <!-- Contador de livros -->
-        </nav>
-       
+        <div id="onlineCount">0 livros</div> <!-- Contador de livros -->
     </header>
 
     <main>
