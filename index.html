@@ -67,32 +67,35 @@
         document.addEventListener('DOMContentLoaded', () => {
             document.getElementById('uploadButton').addEventListener('click', () => {
                 const fileInput = document.getElementById('fileInput');
-                const bookTitle = fileInput.files[0].name.replace(/\.pdf$/, ''); // Captura o nome do PDF sem extensão
+                const files = fileInput.files; // Captura todos os arquivos selecionados
 
-                if (fileInput.files.length > 0) {
-                    const file = fileInput.files[0];
-                    const fileStorageRef = storageRef(storage, `books/${file.name}`);
+                if (files.length > 0) {
+                    Array.from(files).forEach(file => {
+                        const bookTitle = file.name.replace(/\.pdf$/, ''); // Captura o nome do PDF sem extensão
+                        const fileStorageRef = storageRef(storage, `books/${file.name}`);
 
-                    // Fazendo o upload do arquivo
-                    uploadBytes(fileStorageRef, file).then(() => {
-                        // Obtendo a URL do livro após o upload
-                        getDownloadURL(fileStorageRef).then((url) => {
-                            // Adicionando dados do livro ao Firebase
-                            const newBookRef = push(ref(database, 'books/'));
-                            set(newBookRef, {
-                                title: bookTitle,
-                                url: url,
-                            }).then(() => {
-                                // Limpando os campos
-                                fileInput.value = '';
-                                loadBooks(); // Recarregar lista de livros
+                        // Fazendo o upload do arquivo
+                        uploadBytes(fileStorageRef, file).then(() => {
+                            // Obtendo a URL do livro após o upload
+                            getDownloadURL(fileStorageRef).then((url) => {
+                                // Adicionando dados do livro ao Firebase
+                                const newBookRef = push(ref(database, 'books/'));
+                                set(newBookRef, {
+                                    title: bookTitle,
+                                    url: url,
+                                }).then(() => {
+                                    // Limpando os campos
+                                    console.log(`Uploaded: ${bookTitle}`);
+                                    loadBooks(); // Recarregar lista de livros
+                                });
                             });
+                        }).catch(error => {
+                            console.error("Erro ao fazer upload:", error);
                         });
-                    }).catch(error => {
-                        console.error("Erro ao fazer upload:", error);
                     });
+                    fileInput.value = ''; // Limpa o input após o upload
                 } else {
-                    alert('Por favor, selecione um arquivo.');
+                    alert('Por favor, selecione pelo menos um arquivo.');
                 }
             });
 
@@ -110,7 +113,7 @@
     <main>
         <section id="upload-section">
             <h2>Adicionar Livro</h2>
-            <input type="file" id="fileInput" accept=".pdf" required>
+            <input type="file" id="fileInput" accept=".pdf" multiple required> <!-- Permite múltipla seleção -->
             <button id="uploadButton">Adicionar Livro</button>
         </section>
 
