@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Detalhes do Livro</title>
+    <link rel="stylesheet" href="styles.css">
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js";
+        import { getDatabase, ref, onValue } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-database.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyDHkscCAj8pSyeN5KPXUn072_5XeSFF04M",
+            authDomain: "fire-news-f1be1.firebaseapp.com",
+            databaseURL: "https://fire-news-f1be1-default-rtdb.firebaseio.com",
+            projectId: "fire-news-f1be1",
+            storageBucket: "fire-news-f1be1.appspot.com",
+            messagingSenderId: "368411474818",
+            appId: "1:368411474818:web:567947238fa8f2da5fad9b",
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const database = getDatabase(app);
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const urlParams = new URLSearchParams(window.location.search);
+            const bookId = urlParams.get('id');
+
+            if (bookId) {
+                const bookRef = ref(database, `books/${bookId}`);
+                onValue(bookRef, (snapshot) => {
+                    const bookData = snapshot.val();
+                    if (bookData) {
+                        document.getElementById('bookTitle').textContent = bookData.title;
+                        document.getElementById('downloadLink').href = bookData.url;
+                        document.getElementById('downloadLink').textContent = "Baixar o Livro";
+                    } else {
+                        document.getElementById('bookTitle').textContent = "Livro não encontrado!";
+                    }
+                });
+            } else {
+                document.getElementById('bookTitle').textContent = "ID do livro não fornecido!";
+            }
+        });
+    </script>
+</head>
+<body>
+    <header>
+        <h1 id="bookTitle">Carregando...</h1>
+    </header>
+
+    <main>
+        <a id="downloadLink" href="#">Baixar Livro</a>
+    </main>
+</body>
+</html>
