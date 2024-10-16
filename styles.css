@@ -419,3 +419,21 @@ a:hover {
 .share-icon:hover {
     color: #fc5c7d; /* Cor ao passar o mouse */
 }
+
+/* Estilos para o menu de navegação */
+nav {
+    margin: 10px 0;
+}
+
+nav #bookCount {
+    color: #fff;
+    text-decoration: none;
+    padding: 5px 10px;
+    border-radius: 4px;
+    background-color: rgba(255, 255, 255, 0.2);
+    transition: background 0.3s;
+}
+
+nav #bookCount:hover {
+    background-color: rgba(255, 255, 255, 0.4);
+}
