@@ -30,7 +30,6 @@
         // Função para carregar livros do Firebase
         function loadBooks() {
             const bookList = document.getElementById('bookList');
-            const bookCountElement = document.getElementById('bookCount');
             bookList.innerHTML = ''; // Limpa a lista antes de carregar
 
             // Obtendo os livros do Firebase
@@ -52,14 +51,11 @@
                     link.href = book.url;
                     link.textContent = ' (Baixar Livro)';
                     link.target = '_blank'; // Abre em nova aba
-                    link.download = `${book.title}(nosso_livro).pdf`; // Sugere o nome do arquivo para download
+                    link.download = book.title; // Sugere o nome do arquivo para download
                     li.appendChild(link);
 
                     bookList.appendChild(li);
                 });
-
-                // Atualiza o contador de livros
-                bookCountElement.textContent = booksArray.length; // Atualiza o número de livros
             });
         }
 
@@ -67,39 +63,66 @@
         document.addEventListener('DOMContentLoaded', () => {
             document.getElementById('uploadButton').addEventListener('click', () => {
                 const fileInput = document.getElementById('fileInput');
-                const files = fileInput.files; // Captura todos os arquivos selecionados
+                const bookTitle = document.getElementById('bookTitle').value;
 
-                if (files.length > 0) {
-                    Array.from(files).forEach(file => {
-                        const bookTitle = file.name.replace(/\.pdf$/, ''); // Captura o nome do PDF sem extensão
-                        const fileStorageRef = storageRef(storage, `books/${file.name}`);
+                if (fileInput.files.length > 0 && bookTitle) {
+                    const file = fileInput.files[0];
+                    const fileStorageRef = storageRef(storage, `books/${file.name}`);
 
-                        // Fazendo o upload do arquivo
-                        uploadBytes(fileStorageRef, file).then(() => {
-                            // Obtendo a URL do livro após o upload
-                            getDownloadURL(fileStorageRef).then((url) => {
-                                // Adicionando dados do livro ao Firebase
-                                const newBookRef = push(ref(database, 'books/'));
-                                set(newBookRef, {
-                                    title: bookTitle,
-                                    url: url,
-                                }).then(() => {
-                                    // Limpando os campos
-                                    console.log(`Uploaded: ${bookTitle}`);
-                                    loadBooks(); // Recarregar lista de livros
-                                });
+                    // Fazendo o upload do arquivo
+                    uploadBytes(fileStorageRef, file).then(() => {
+                        // Obtendo a URL do livro após o upload
+                        getDownloadURL(fileStorageRef).then((url) => {
+                            // Adicionando dados do livro ao Firebase
+                            const newBookRef = push(ref(database, 'books/'));
+                            set(newBookRef, {
+                                title: bookTitle,
+                                url: url,
+                            }).then(() => {
+                                // Limpando os campos
+                                fileInput.value = '';
+                                document.getElementById('bookTitle').value = '';
+                                loadBooks(); // Recarregar lista de livros
                             });
-                        }).catch(error => {
-                            console.error("Erro ao fazer upload:", error);
                         });
                     });
-                    fileInput.value = ''; // Limpa o input após o upload
                 } else {
-                    alert('Por favor, selecione pelo menos um arquivo.');
+                    alert('Por favor, preencha todos os campos.');
                 }
             });
 
+            // Função para pesquisar livros
+            document.getElementById('search').addEventListener('input', (event) => {
+                const searchQuery = event.target.value.toLowerCase();
+                const bookList = document.getElementById('bookList');
+                const items = bookList.getElementsByTagName('li');
+
+                for (let i = 0; i < items.length; i++) {
+                    const item = items[i];
+                    const title = item.textContent.toLowerCase();
+                    if (title.includes(searchQuery)) {
+                        item.style.display = ''; // Mostrar item
+                    } else {
+                        item.style.display = 'none'; // Esconder item
+                    }
+                }
+            });
+
+            // Função para rastrear usuários online
+            const userRef = ref(database, 'users/' + Math.random().toString(36).substr(2, 9));
+            set(userRef, { online: true });
+
+            onValue(ref(database, 'users'), (snapshot) => {
+                const onlineCount = snapshot.numChildren();
+                document.getElementById('onlineCount').textContent = onlineCount;
+            });
+
             loadBooks(); // Carregar livros ao iniciar
+        });
+
+        // Remover usuário da lista quando sair
+        window.addEventListener('beforeunload', () => {
+            set(userRef, null); // Remove o usuário do Firebase
         });
     </script>
 </head>
@@ -107,13 +130,14 @@
     <header>
         <h1>Nossa Biblioteca</h1>
         <p>Compartilhe e baixe livros gratuitamente!</p>
-        <div id="bookCount">0 livros</div> <!-- Contador de livros -->
+        <div id="onlineCount">0 online</div> <!-- Contador de usuários online -->
     </header>
 
     <main>
         <section id="upload-section">
             <h2>Adicionar Livro</h2>
-            <input type="file" id="fileInput" accept=".pdf" multiple required> <!-- Permite múltipla seleção -->
+            <input type="text" id="bookTitle" placeholder="Título do Livro" required>
+            <input type="file" id="fileInput" accept=".pdf" required>
             <button id="uploadButton">Adicionar Livro</button>
         </section>
 
