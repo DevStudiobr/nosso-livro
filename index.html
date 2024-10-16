@@ -30,6 +30,7 @@
         // Função para carregar livros do Firebase
         function loadBooks() {
             const bookList = document.getElementById('bookList');
+            const bookCountElement = document.getElementById('bookCount');
             bookList.innerHTML = ''; // Limpa a lista antes de carregar
 
             // Obtendo os livros do Firebase
@@ -51,32 +52,24 @@
                     link.href = book.url;
                     link.textContent = ' (Baixar Livro)';
                     link.target = '_blank'; // Abre em nova aba
-                    link.download = book.title; // Sugere o nome do arquivo para download
+                    link.download = `${book.title}(nosso_livro).pdf`; // Sugere o nome do arquivo para download
                     li.appendChild(link);
 
                     bookList.appendChild(li);
                 });
+
+                // Atualiza o contador de livros
+                bookCountElement.textContent = booksArray.length; // Atualiza o número de livros
             });
         }
 
         // Função para fazer upload de livros
         document.addEventListener('DOMContentLoaded', () => {
-            const fileInput = document.getElementById('fileInput');
-            const bookTitleInput = document.getElementById('bookTitle');
-
-            fileInput.addEventListener('change', () => {
-                const file = fileInput.files[0];
-                if (file) {
-                    // Extrair o nome do arquivo sem a extensão e definir como título
-                    const title = file.name.replace(/\.pdf$/, ""); // Remove a extensão
-                    bookTitleInput.value = title; // Define o título do livro
-                }
-            });
-
             document.getElementById('uploadButton').addEventListener('click', () => {
-                const bookTitle = bookTitleInput.value;
+                const fileInput = document.getElementById('fileInput');
+                const bookTitle = fileInput.files[0].name.replace(/\.pdf$/, ''); // Captura o nome do PDF sem extensão
 
-                if (fileInput.files.length > 0 && bookTitle) {
+                if (fileInput.files.length > 0) {
                     const file = fileInput.files[0];
                     const fileStorageRef = storageRef(storage, `books/${file.name}`);
 
@@ -92,13 +85,14 @@
                             }).then(() => {
                                 // Limpando os campos
                                 fileInput.value = '';
-                                bookTitleInput.value = '';
                                 loadBooks(); // Recarregar lista de livros
                             });
                         });
+                    }).catch(error => {
+                        console.error("Erro ao fazer upload:", error);
                     });
                 } else {
-                    alert('Por favor, preencha todos os campos.');
+                    alert('Por favor, selecione um arquivo.');
                 }
             });
 
@@ -110,13 +104,12 @@
     <header>
         <h1>Nossa Biblioteca</h1>
         <p>Compartilhe e baixe livros gratuitamente!</p>
-        <div id="onlineCount">0 livros</div> <!-- Contador de livros -->
+        <div id="bookCount">0 livros</div> <!-- Contador de livros -->
     </header>
 
     <main>
         <section id="upload-section">
             <h2>Adicionar Livro</h2>
-            <input type="text" id="bookTitle" placeholder="Título do Livro" required>
             <input type="file" id="fileInput" accept=".pdf" required>
             <button id="uploadButton">Adicionar Livro</button>
         </section>
@@ -132,4 +125,4 @@
         </section>
     </main>
 </body>
-</html>
+    </html>
