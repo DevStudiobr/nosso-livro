@@ -6,12 +6,10 @@
     <title>Nossa Biblioteca</title>
     <link rel="stylesheet" href="styles.css">
     <script type="module">
-        // Importando os módulos do Firebase
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js";
-        import { getDatabase, ref, onValue, push, set } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-database.js";
-        import { getStorage, ref as storageRef, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-storage.js";
-
         // Configuração do Firebase
+        import { initializeApp } from 'https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js';
+        import { getDatabase, ref, set, onValue } from 'https://www.gstatic.com/firebasejs/9.6.1/firebase-database.js';
+
         const firebaseConfig = {
             apiKey: "AIzaSyDHkscCAj8pSyeN5KPXUn072_5XeSFF04M",
             authDomain: "fire-news-f1be1.firebaseapp.com",
@@ -22,82 +20,106 @@
             appId: "1:368411474818:web:567947238fa8f2da5fad9b",
         };
 
-        // Inicializando Firebase
         const app = initializeApp(firebaseConfig);
-        const database = getDatabase(app);
-        const storage = getStorage(app);
+        const db = getDatabase(app);
 
-        // Função para carregar livros do Firebase
+        const uploadButton = document.getElementById('uploadButton');
+        const fileInput = document.getElementById('fileInput');
+        const searchInput = document.getElementById('search');
+        const bookList = document.getElementById('bookList');
+        const bookCount = document.getElementById('bookCount');
+
+        // Função para carregar livros
         function loadBooks() {
-            const bookList = document.getElementById('bookList');
-            const bookCountElement = document.getElementById('bookCount');
-            bookList.innerHTML = ''; // Limpa a lista antes de carregar
-
-            // Obtendo os livros do Firebase
-            const booksRef = ref(database, 'books/');
+            const booksRef = ref(db, 'books/');
             onValue(booksRef, (snapshot) => {
+                bookList.innerHTML = ''; // Limpa a lista antes de adicionar os novos itens
+                let count = 0; // Contador de livros
                 const booksArray = [];
+
                 snapshot.forEach((childSnapshot) => {
-                    const bookData = childSnapshot.val();
-                    booksArray.push({ key: childSnapshot.key, ...bookData });
+                    const book = childSnapshot.val();
+                    booksArray.push(book); // Adiciona cada livro a um array
                 });
 
-                // Preenche a lista com os livros
+                // Ordena os livros pela data de upload (assumindo que você salva um timestamp)
+                booksArray.sort((a, b) => b.timestamp - a.timestamp); // Os mais recentes primeiro
+
                 booksArray.forEach((book) => {
                     const li = document.createElement('li');
-                    li.textContent = book.title || "Título não disponível"; // Verifica se o título está disponível
+                    li.textContent = book.title; // Título do livro
 
-                    // Link para download do livro
-                    const link = document.createElement('a');
-                    link.href = book.url;
-                    link.textContent = ' (Baixar Livro)';
-                    link.target = '_blank'; // Abre em nova aba
-                    link.download = `${book.title}(nosso_livro).pdf`; // Sugere o nome do arquivo para download
-                    li.appendChild(link);
+                    // Criação do botão de download
+                    const downloadButton = document.createElement('button');
+                    downloadButton.textContent = 'Baixar';
+                    downloadButton.onclick = () => downloadBook(book.fileName); // Define a ação do botão
 
+                    li.appendChild(downloadButton); // Adiciona o botão ao item da lista
                     bookList.appendChild(li);
+                    count++;
                 });
 
-                // Atualiza o contador de livros
-                bookCountElement.textContent = booksArray.length; // Atualiza o número de livros
+                bookCount.textContent = `${count} livros`; // Atualiza o contador de livros
+            }, (error) => {
+                console.error("Erro ao carregar livros:", error); // Log de erro
             });
         }
 
-        // Função para fazer upload de livros
-        document.addEventListener('DOMContentLoaded', () => {
-            document.getElementById('uploadButton').addEventListener('click', () => {
-                const fileInput = document.getElementById('fileInput');
-                const bookTitle = fileInput.files[0].name.replace(/\.pdf$/, ''); // Captura o nome do PDF sem extensão
-
-                if (fileInput.files.length > 0) {
-                    const file = fileInput.files[0];
-                    const fileStorageRef = storageRef(storage, `books/${file.name}`);
-
-                    // Fazendo o upload do arquivo
-                    uploadBytes(fileStorageRef, file).then(() => {
-                        // Obtendo a URL do livro após o upload
-                        getDownloadURL(fileStorageRef).then((url) => {
-                            // Adicionando dados do livro ao Firebase
-                            const newBookRef = push(ref(database, 'books/'));
-                            set(newBookRef, {
-                                title: bookTitle,
-                                url: url,
-                            }).then(() => {
-                                // Limpando os campos
-                                fileInput.value = '';
-                                loadBooks(); // Recarregar lista de livros
-                            });
-                        });
-                    }).catch(error => {
-                        console.error("Erro ao fazer upload:", error);
+        // Função para adicionar livros
+        uploadButton.addEventListener('click', () => {
+            const files = fileInput.files;
+            const category = document.getElementById('bookCategory').value;
+            for (let i = 0; i < files.length; i++) {
+                const file = files[i];
+                const title = file.name.replace('.pdf', ''); // Captura o título do arquivo
+                const bookData = {
+                    title: title,
+                    category: category,
+                    fileName: file.name,
+                    timestamp: Date.now() // Adiciona timestamp
+                };
+                const newBookRef = ref(db, 'books/' + title);
+                set(newBookRef, bookData)
+                    .then(() => {
+                        console.log("Livro adicionado:", title); // Log de sucesso
+                        loadBooks(); // Recarrega a lista após adicionar um livro
+                    })
+                    .catch((error) => {
+                        console.error("Erro ao adicionar livro:", error); // Log de erro
                     });
-                } else {
-                    alert('Por favor, selecione um arquivo.');
-                }
-            });
-
-            loadBooks(); // Carregar livros ao iniciar
+            }
+            fileInput.value = ''; // Limpa o input após o upload
+            document.getElementById('bookCategory').value = ''; // Limpa a categoria
         });
+
+        // Função para baixar livro
+        function downloadBook(fileName) {
+            const storageUrl = `https://firebasestorage.googleapis.com/v0/b/${firebaseConfig.storageBucket}/o/${encodeURIComponent(fileName)}?alt=media`;
+            const link = document.createElement('a');
+            link.href = storageUrl;
+            link.download = fileName; // Define o nome do arquivo ao baixar
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+
+        // Função para pesquisar livros
+        searchInput.addEventListener('input', (event) => {
+            const searchTerm = event.target.value.toLowerCase();
+            const items = bookList.getElementsByTagName('li');
+
+            for (let i = 0; i < items.length; i++) {
+                const item = items[i];
+                if (item.textContent.toLowerCase().includes(searchTerm)) {
+                    item.style.display = ''; // Exibe o item
+                } else {
+                    item.style.display = 'none'; // Oculta o item
+                }
+            }
+        });
+
+        // Carrega livros ao inicializar
+        loadBooks();
     </script>
 </head>
 <body>
@@ -110,8 +132,9 @@
     <main>
         <section id="upload-section">
             <h2>Adicionar Livro</h2>
-            <input type="file" id="fileInput" accept=".pdf" required>
-            <button id="uploadButton">Adicionar Livro</button>
+            <input type="text" id="bookCategory" placeholder="Categoria do Livro" required>
+            <input type="file" id="fileInput" accept=".pdf" multiple required>
+            <button id="uploadButton">Adicionar Livros</button>
         </section>
 
         <section id="search-section">
@@ -125,4 +148,4 @@
         </section>
     </main>
 </body>
-    </html>
+</html>
