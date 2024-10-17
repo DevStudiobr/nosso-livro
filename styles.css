@@ -1,5 +1,3 @@
-/* styles.css */
-
 /* Reset básico */
 * {
     margin: 0;
@@ -9,431 +7,173 @@
 
 /* Estilos do corpo */
 body {
-    font-family: 'Arial', sans-serif;
-    background-color: #f0f4f8; /* Cor de fundo mais suave */
+    font-family: 'Roboto', sans-serif;
+    background-color: #f9f9fb;
     color: #333;
     line-height: 1.6;
 }
 
 /* Cabeçalho */
 header {
-    background: linear-gradient(90deg, #6a82fb, #fc5c7d); /* Gradiente mais moderno */
+    background: linear-gradient(90deg, #4e54c8, #8f94fb);
     color: white;
-    padding: 30px 20px;
+    padding: 20px;
     text-align: center;
     box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
-    border-radius: 8px; /* Bordas arredondadas */
+    border-radius: 8px;
+}
+
+/* Estilos do título principal */
+h1 {
+    font-size: 2.5rem;
+    margin-bottom: 10px;
+}
+
+p {
+    font-size: 1.2rem;
+    margin-bottom: 10px;
+}
+
+#bookCount {
+    font-size: 1rem;
+    margin-top: 5px;
+    font-style: italic;
 }
 
 /* Seções principais */
 main {
-    max-width: 800px;
+    max-width: 900px;
     margin: 20px auto;
-    padding: 30px;
+    padding: 20px;
     background: white;
-    border-radius: 12px; /* Bordas arredondadas */
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+    border-radius: 12px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
 }
 
 /* Estilos de título */
-h1, h2 {
+h2 {
+    font-size: 1.8rem;
+    color: #4e54c8;
     margin-bottom: 20px;
-    font-weight: 600; /* Negrito mais suave */
 }
 
 /* Estilizando o formulário de upload */
 #upload-section {
     margin-bottom: 30px;
     padding: 20px;
-    background: #e3f2fd; /* Fundo mais claro */
-    border-radius: 12px; /* Bordas arredondadas */
-    box-shadow: 0 2px 15px rgba(0, 0, 0, 0.1);
+    background: #e3e9ff;
+    border-radius: 12px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
 }
 
-/* Estilizando os inputs e botão */
+/* Inputs e botões */
 input[type="text"],
 input[type="file"],
 button {
     width: 100%;
     padding: 12px;
     margin: 10px 0;
-    border: 2px solid #ccc; /* Borda mais definida */
-    border-radius: 6px; /* Bordas arredondadas */
-    transition: all 0.3s ease; /* Transições mais suaves */
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    font-size: 1rem;
+    transition: all 0.3s ease;
 }
 
 input[type="text"]:focus,
 input[type="file"]:focus {
-    border-color: #6a82fb; /* Cor da borda em foco */
-    box-shadow: 0 0 5px rgba(106, 130, 251, 0.5); /* Sombra em foco */
+    border-color: #4e54c8;
+    box-shadow: 0 0 5px rgba(78, 84, 200, 0.4);
 }
 
-/* Estilo do botão */
 button {
-    background: #6a82fb;
+    background: #4e54c8;
     color: white;
     font-weight: bold;
     cursor: pointer;
-    border: none; /* Sem borda para o botão */
+    border: none;
 }
 
 button:hover {
-    background: #5a6cd1; /* Cor do botão ao passar o mouse */
+    background: #3d43b1;
 }
 
-button:disabled {
-    background: #ccc;
-    cursor: not-allowed;
+/* Progresso de upload */
+#progressContainer {
+    display: none;
+    margin-top: 20px;
 }
 
-/* Estilizando a seção de pesquisa */
+progress {
+    width: 100%;
+    height: 20px;
+}
+
+/* Pesquisa */
 #search-section {
     margin: 30px 0;
 }
 
-/* Estilos para a lista de livros */
-#books-section {
-    margin-top: 30px;
+#search {
+    width: 100%;
+    padding: 12px;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    transition: all 0.3s ease;
 }
 
+#categoryFilter {
+    margin-top: 10px;
+    padding: 12px;
+    width: 100%;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+}
+
+/* Lista de livros */
 #bookList {
     list-style-type: none;
     padding: 0;
 }
 
 #bookList li {
-    background: #f9f9f9;
+    background: #f5f5f5;
     margin: 10px 0;
     padding: 15px;
-    border-radius: 6px;
-    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-    position: relative;
-    transition: transform 0.2s, box-shadow 0.2s; /* Adicionando transição de sombra */
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+    transition: transform 0.2s, box-shadow 0.2s;
 }
 
 #bookList li:hover {
-    transform: translateY(-2px); /* Efeito de movimento ao passar o mouse */
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15); /* Sombra mais forte ao passar o mouse */
-}
-
-/* Estilos para links */
-a {
-    color: #6a82fb;
-    text-decoration: none;
-    font-weight: bold;
-    transition: color 0.3s; /* Transição para links */
-}
-
-a:hover {
-    color: #fc5c7d; /* Cor do link ao passar o mouse */
-}
-
-/* Estilo do contador de usuários online */
-#onlineCount {
-    font-size: 0.9rem; /* Tamanho do texto menor */
-    margin-top: 10px;
-    font-style: italic; /* Itálico para destaque */
-}/* styles.css */
-
-/* Reset básico */
-* {
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
-}
-
-/* Estilos do corpo */
-body {
-    font-family: 'Arial', sans-serif;
-    background-color: #f0f4f8; /* Cor de fundo mais suave */
-    color: #333;
-    line-height: 1.6;
-}
-
-/* Cabeçalho */
-header {
-    background: linear-gradient(90deg, #6a82fb, #fc5c7d); /* Gradiente mais moderno */
-    color: white;
-    padding: 30px 20px;
-    text-align: center;
+    transform: translateY(-2px);
     box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
-    border-radius: 8px; /* Bordas arredondadas */
 }
 
-/* Seções principais */
-main {
-    max-width: 800px;
-    margin: 20px auto;
-    padding: 30px;
-    background: white;
-    border-radius: 12px; /* Bordas arredondadas */
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
-}
-
-/* Estilos de título */
-h1, h2 {
-    margin-bottom: 20px;
-    font-weight: 600; /* Negrito mais suave */
-}
-
-/* Estilizando o formulário de upload */
-#upload-section {
-    margin-bottom: 30px;
-    padding: 20px;
-    background: #e3f2fd; /* Fundo mais claro */
-    border-radius: 12px; /* Bordas arredondadas */
-    box-shadow: 0 2px 15px rgba(0, 0, 0, 0.1);
-}
-
-/* Estilizando os inputs e botão */
-input[type="text"],
-input[type="file"],
-button {
-    width: 100%;
-    padding: 12px;
-    margin: 10px 0;
-    border: 2px solid #ccc; /* Borda mais definida */
-    border-radius: 6px; /* Bordas arredondadas */
-    transition: all 0.3s ease; /* Transições mais suaves */
-}
-
-input[type="text"]:focus,
-input[type="file"]:focus {
-    border-color: #6a82fb; /* Cor da borda em foco */
-    box-shadow: 0 0 5px rgba(106, 130, 251, 0.5); /* Sombra em foco */
-}
-
-/* Estilo do botão */
-button {
-    background: #6a82fb;
-    color: white;
-    font-weight: bold;
-    cursor: pointer;
-    border: none; /* Sem borda para o botão */
-}
-
-button:hover {
-    background: #5a6cd1; /* Cor do botão ao passar o mouse */
-}
-
-button:disabled {
-    background: #ccc;
-    cursor: not-allowed;
-}
-
-/* Estilizando a seção de pesquisa */
-#search-section {
-    margin: 30px 0;
-}
-
-/* Estilos para a lista de livros */
-#books-section {
-    margin-top: 30px;
-}
-
-#bookList {
-    list-style-type: none;
-    padding: 0;
-}
-
-#bookList li {
-    background: #f9f9f9;
-    margin: 10px 0;
-    padding: 15px;
-    border-radius: 6px;
-    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-    position: relative;
-    transition: transform 0.2s, box-shadow 0.2s; /* Adicionando transição de sombra */
-}
-
-#bookList li:hover {
-    transform: translateY(-2px); /* Efeito de movimento ao passar o mouse */
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15); /* Sombra mais forte ao passar o mouse */
-}
-
-/* Estilos para links */
 a {
-    color: #6a82fb;
+    color: #4e54c8;
     text-decoration: none;
     font-weight: bold;
-    transition: color 0.3s; /* Transição para links */
-}
-
-a:hover {
-    color: #fc5c7d; /* Cor do link ao passar o mouse */
-}
-
-/* Estilo do contador de usuários online */
-#onlineCount {
-    font-size: 0.9rem; /* Tamanho do texto menor */
-    margin-top: 10px;
-    font-style: italic; /* Itálico para destaque */
-}/* styles.css */
-
-/* Reset básico */
-* {
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
-}
-
-/* Estilos do corpo */
-body {
-    font-family: 'Arial', sans-serif;
-    background-color: #f0f4f8; /* Cor de fundo mais suave */
-    color: #333;
-    line-height: 1.6;
-}
-
-/* Cabeçalho */
-header {
-    background: linear-gradient(90deg, #6a82fb, #fc5c7d); /* Gradiente mais moderno */
-    color: white;
-    padding: 30px 20px;
-    text-align: center;
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
-    border-radius: 8px; /* Bordas arredondadas */
-}
-
-/* Seções principais */
-main {
-    max-width: 800px;
-    margin: 20px auto;
-    padding: 30px;
-    background: white;
-    border-radius: 12px; /* Bordas arredondadas */
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
-}
-
-/* Estilos de título */
-h1, h2 {
-    margin-bottom: 20px;
-    font-weight: 600; /* Negrito mais suave */
-}
-
-/* Estilizando o formulário de upload */
-#upload-section {
-    margin-bottom: 30px;
-    padding: 20px;
-    background: #e3f2fd; /* Fundo mais claro */
-    border-radius: 12px; /* Bordas arredondadas */
-    box-shadow: 0 2px 15px rgba(0, 0, 0, 0.1);
-}
-
-/* Estilizando os inputs e botão */
-input[type="text"],
-input[type="file"],
-button {
-    width: 100%;
-    padding: 12px;
-    margin: 10px 0;
-    border: 2px solid #ccc; /* Borda mais definida */
-    border-radius: 6px; /* Bordas arredondadas */
-    transition: all 0.3s ease; /* Transições mais suaves */
-}
-
-input[type="text"]:focus,
-input[type="file"]:focus {
-    border-color: #6a82fb; /* Cor da borda em foco */
-    box-shadow: 0 0 5px rgba(106, 130, 251, 0.5); /* Sombra em foco */
-}
-
-/* Estilo do botão */
-button {
-    background: #6a82fb;
-    color: white;
-    font-weight: bold;
-    cursor: pointer;
-    border: none; /* Sem borda para o botão */
-}
-
-button:hover {
-    background: #5a6cd1; /* Cor do botão ao passar o mouse */
-}
-
-button:disabled {
-    background: #ccc;
-    cursor: not-allowed;
-}
-
-/* Estilizando a seção de pesquisa */
-#search-section {
-    margin: 30px 0;
-}
-
-/* Estilos para a lista de livros */
-#books-section {
-    margin-top: 30px;
-}
-
-#bookList {
-    list-style-type: none;
-    padding: 0;
-}
-
-#bookList li {
-    background: #f9f9f9;
-    margin: 10px 0;
-    padding: 15px;
-    border-radius: 6px;
-    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-    position: relative;
-    transition: transform 0.2s, box-shadow 0.2s; /* Adicionando transição de sombra */
-}
-
-#bookList li:hover {
-    transform: translateY(-2px); /* Efeito de movimento ao passar o mouse */
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15); /* Sombra mais forte ao passar o mouse */
-}
-
-/* Estilos para links */
-a {
-    color: #6a82fb;
-    text-decoration: none;
-    font-weight: bold;
-    transition: color 0.3s; /* Transição para links */
-}
-
-a:hover {
-    color: #fc5c7d; /* Cor do link ao passar o mouse */
-}
-
-/* Estilo do contador de usuários online */
-#onlineCount {
-    font-size: 0.9rem; /* Tamanho do texto menor */
-    margin-top: 10px;
-    font-style: italic; /* Itálico para destaque */
-}
-
-/* Adicionando estilo para o ícone de compartilhamento */
-.share-icon {
-    position: absolute;
-    right: 10px;
-    top: 15px;
-    cursor: pointer;
-    font-size: 20px;
-    color: #4a90e2;
     transition: color 0.3s;
 }
 
-.share-icon:hover {
-    color: #fc5c7d; /* Cor ao passar o mouse */
+a:hover {
+    color: #8f94fb;
 }
 
-/* Estilos para o menu de navegação */
-nav {
-    margin: 10px 0;
+/* Footer */
+footer {
+    margin-top: 50px;
+    text-align: center;
+    font-size: 0.9rem;
+    color: #666;
 }
 
-nav #bookCount {
-    color: #fff;
+footer a {
+    color: #4e54c8;
+    font-weight: bold;
     text-decoration: none;
-    padding: 5px 10px;
-    border-radius: 4px;
-    background-color: rgba(255, 255, 255, 0.2);
-    transition: background 0.3s;
 }
 
-nav #bookCount:hover {
-    background-color: rgba(255, 255, 255, 0.4);
+footer a:hover {
+    color: #8f94fb;
 }
