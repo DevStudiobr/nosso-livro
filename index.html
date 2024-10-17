@@ -9,7 +9,7 @@
         // Importando os módulos do Firebase
         import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js";
         import { getDatabase, ref, onValue, push, set } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-database.js";
-        import { getStorage, ref as storageRef, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-storage.js";
+        import { getStorage, ref as storageRef, uploadBytesResumable, getDownloadURL } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-storage.js";
 
         // Configuração do Firebase
         const firebaseConfig = {
@@ -27,13 +27,11 @@
         const database = getDatabase(app);
         const storage = getStorage(app);
 
-        // Função para carregar livros do Firebase e exibir estatísticas
+        // Função para carregar livros do Firebase
         function loadBooks() {
             const bookList = document.getElementById('bookList');
-            const bookCount = document.getElementById('bookCount');
             bookList.innerHTML = ''; // Limpa a lista antes de carregar
 
-            // Obtendo os livros do Firebase
             const booksRef = ref(database, 'books/');
             onValue(booksRef, (snapshot) => {
                 const booksArray = [];
@@ -42,102 +40,84 @@
                     booksArray.push({ key: childSnapshot.key, ...bookData });
                 });
 
-                // Atualizando o contador de livros
-                bookCount.textContent = `${booksArray.length} livros`;
-
-                // Preenche a lista com os livros
                 booksArray.forEach((book) => {
                     const li = document.createElement('li');
+                    li.textContent = book.title || "Título não disponível"; 
 
-                    // Verifica se o título está disponível
-                    li.textContent = book.title ? book.title : "Título não disponível";
+                    const link = document.createElement('a');
+                    link.href = book.url;
+                    link.textContent = ' (Baixar Livro)';
+                    link.target = '_blank'; 
+                    link.download = book.title;
+                    li.appendChild(link);
 
-                    // Botão de download
-                    const downloadButton = document.createElement('button');
-                    downloadButton.classList.add('download-button');
-                    downloadButton.textContent = 'Baixar Livro';
-                    downloadButton.onclick = () => {
-                        window.open(book.url, '_blank');
-
-                        // Atualizando estatística de downloads
-                        const downloadCountRef = ref(database, `books/${book.key}/downloads`);
-                        onValue(downloadCountRef, (snapshot) => {
-                            const currentCount = snapshot.val() || 0;
-                            set(downloadCountRef, currentCount + 1);
-                        });
-                    };
-
-                    li.appendChild(downloadButton);
                     bookList.appendChild(li);
                 });
+
+                // Atualiza a contagem de livros
+                const bookCount = document.getElementById('bookCount');
+                bookCount.textContent = `${booksArray.length} livros`;
             });
         }
 
-        // Função para fazer upload de livros
+        // Função para fazer upload de livros com feedback
         document.addEventListener('DOMContentLoaded', () => {
             const fileInput = document.getElementById('fileInput');
+            const progressBar = document.getElementById('progressBar');
+            const progressContainer = document.getElementById('progressContainer');
+            const statusMessage = document.getElementById('statusMessage');
 
             document.getElementById('uploadButton').addEventListener('click', () => {
-                const files = fileInput.files;  // Obtendo todos os arquivos selecionados
+                const files = fileInput.files;
 
                 if (files.length > 0) {
-                    // Itera sobre os arquivos selecionados
+                    progressContainer.style.display = 'block';  // Exibe a barra de progresso
+                    progressBar.value = 0;  // Reseta a barra de progresso
+                    statusMessage.textContent = '';  // Limpa mensagens anteriores
+
                     for (let i = 0; i < files.length; i++) {
                         const file = files[i];
-                        const fileName = file.name.replace('.pdf', ''); // Retira a extensão .pdf
+                        const fileName = file.name.replace('.pdf', ''); 
                         const fileStorageRef = storageRef(storage, `books/${file.name}`);
 
-                        // Fazendo o upload de cada arquivo
-                        uploadBytes(fileStorageRef, file).then(() => {
-                            // Obtendo a URL do livro após o upload
-                            getDownloadURL(fileStorageRef).then((url) => {
-                                // Adicionando dados do livro ao Firebase
-                                const newBookRef = push(ref(database, 'books/'));
-                                set(newBookRef, {
-                                    title: fileName,
-                                    url: url,
-                                    downloads: 0 // Inicializa contagem de downloads
-                                }).then(() => {
-                                    // Recarregar lista de livros após o upload
-                                    if (i === files.length - 1) {  // Verifica se é o último arquivo
-                                        fileInput.value = '';  // Limpa o input de arquivos
-                                        loadBooks(); // Recarregar a lista de livros após todos os uploads
-                                    }
+                        const uploadTask = uploadBytesResumable(fileStorageRef, file);
+
+                        // Atualiza a barra de progresso
+                        uploadTask.on('state_changed', 
+                            (snapshot) => {
+                                const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+                                progressBar.value = progress;
+                            }, 
+                            (error) => {
+                                statusMessage.textContent = 'Erro ao fazer upload: ' + error.message;
+                                statusMessage.style.color = 'red';
+                                progressContainer.style.display = 'none'; // Esconde a barra de progresso em caso de erro
+                            }, 
+                            () => {
+                                getDownloadURL(uploadTask.snapshot.ref).then((url) => {
+                                    const newBookRef = push(ref(database, 'books/'));
+                                    set(newBookRef, {
+                                        title: fileName,
+                                        url: url,
+                                    }).then(() => {
+                                        if (i === files.length - 1) { 
+                                            fileInput.value = '';  
+                                            progressContainer.style.display = 'none';  // Esconde a barra de progresso após o upload
+                                            statusMessage.textContent = 'Upload concluído com sucesso!';
+                                            statusMessage.style.color = 'green';
+                                            loadBooks(); 
+                                        }
+                                    });
                                 });
-                            });
-                        });
+                            }
+                        );
                     }
                 } else {
                     alert('Por favor, selecione pelo menos um arquivo.');
                 }
             });
 
-            // Função de pesquisa
-            document.getElementById('search').addEventListener('input', (event) => {
-                const searchQuery = event.target.value.toLowerCase();  // Obtém o valor digitado e converte para minúsculas
-                const bookList = document.getElementById('bookList');
-                const items = bookList.getElementsByTagName('li');  // Todos os <li> dos livros
-
-                // Itera sobre todos os <li> na lista
-                for (let i = 0; i < items.length; i++) {
-                    const item = items[i];  // Pega cada <li>
-                    const title = item.textContent.toLowerCase();  // Texto do título do livro
-                    if (title.includes(searchQuery)) {
-                        item.style.display = '';  // Mostra o item se combinar com a pesquisa
-                    } else {
-                        item.style.display = 'none';  // Esconde o item se não combinar
-                    }
-                }
-            });
-
-            // Alternar modo escuro
-            document.getElementById('darkModeToggle').addEventListener('click', () => {
-                document.body.classList.toggle('dark-mode');
-                document.querySelectorAll('header, main, #upload-section, #bookList li, button, a')
-                        .forEach(el => el.classList.toggle('dark-mode'));
-            });
-
-            loadBooks(); // Carregar livros ao iniciar
+            loadBooks(); 
         });
     </script>
 </head>
@@ -146,7 +126,6 @@
         <h1>Nossa Biblioteca</h1>
         <p>Compartilhe e baixe livros gratuitamente!</p>
         <div id="bookCount">0 livros</div> <!-- Contador de livros -->
-        <button id="darkModeToggle" class="secondary-button">Alternar Modo Escuro</button>
     </header>
 
     <main>
@@ -154,11 +133,12 @@
             <h2>Adicionar Livros</h2>
             <input type="file" id="fileInput" accept=".pdf" multiple required>
             <button id="uploadButton">Adicionar Livros</button>
-        </section>
 
-        <section id="search-section">
-            <h2>Pesquisar Livros</h2>
-            <input type="text" id="search" placeholder="Pesquise pelo título...">
+            <!-- Barra de progresso e feedback de status -->
+            <div id="progressContainer" style="display: none;">
+                <progress id="progressBar" value="0" max="100" style="width: 100%;"></progress>
+            </div>
+            <p id="statusMessage"></p>  <!-- Mensagens de sucesso ou erro -->
         </section>
 
         <section id="books-section">
@@ -167,4 +147,4 @@
         </section>
     </main>
 </body>
-    </html>
+</html>
