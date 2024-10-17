@@ -6,12 +6,10 @@
     <title>Nossa Biblioteca</title>
     <link rel="stylesheet" href="styles.css">
     <script type="module">
-        // Importando os módulos do Firebase
         import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js";
         import { getDatabase, ref, onValue, push, set } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-database.js";
         import { getStorage, ref as storageRef, uploadBytesResumable, getDownloadURL } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-storage.js";
 
-        // Configuração do Firebase
         const firebaseConfig = {
             apiKey: "AIzaSyDHkscCAj8pSyeN5KPXUn072_5XeSFF04M",
             authDomain: "fire-news-f1be1.firebaseapp.com",
@@ -22,16 +20,15 @@
             appId: "1:368411474818:web:567947238fa8f2da5fad9b",
         };
 
-        // Inicializando Firebase
         const app = initializeApp(firebaseConfig);
         const database = getDatabase(app);
         const storage = getStorage(app);
 
-        // Função para carregar livros do Firebase
         function loadBooks() {
             const bookList = document.getElementById('bookList');
+            const bookCount = document.getElementById('bookCount');
+            const categoryFilter = document.getElementById('categoryFilter');
             bookList.innerHTML = ''; // Limpa a lista antes de carregar
-
             const booksRef = ref(database, 'books/');
             onValue(booksRef, (snapshot) => {
                 const booksArray = [];
@@ -40,76 +37,105 @@
                     booksArray.push({ key: childSnapshot.key, ...bookData });
                 });
 
-                // Atualiza a contagem de livros
-                const bookCount = document.getElementById('bookCount');
-                bookCount.textContent = `${booksArray.length} livros`;
+                // Ordena os livros em ordem alfabética pelo título
+                booksArray.sort((a, b) => a.title.localeCompare(b.title));
 
-                // Preenche a lista com os livros
+                bookCount.textContent = `${booksArray.length} livros`;
                 booksArray.forEach((book) => {
                     const li = document.createElement('li');
-                    li.textContent = book.title || "Título não disponível"; 
+                    li.textContent = book.title || "Título não disponível";
 
                     const link = document.createElement('a');
                     link.href = book.url;
                     link.textContent = ' (Baixar Livro)';
-                    link.target = '_blank'; 
+                    link.target = '_blank';
                     link.download = book.title;
                     li.appendChild(link);
 
+                    // Adiciona categoria ao li
+                    if (book.category) {
+                        const category = document.createElement('span');
+                        category.textContent = ` [${book.category}]`;
+                        li.appendChild(category);
+                    }
+
                     bookList.appendChild(li);
                 });
-
-                // Atualiza a pesquisa
                 updateSearch(booksArray);
+                updateCategoryFilter(booksArray); // Atualiza o filtro de categorias
             });
         }
 
-        // Função para fazer upload de livros com feedback
+        function updateCategoryFilter(booksArray) {
+            const categoryFilter = document.getElementById('categoryFilter');
+            const categories = new Set(booksArray.map(book => book.category).filter(Boolean));
+            categoryFilter.innerHTML = '<option value="">Todas as categorias</option>'; // Reinicia as opções
+
+            categories.forEach((category) => {
+                const option = document.createElement('option');
+                option.value = category;
+                option.textContent = category;
+                categoryFilter.appendChild(option);
+            });
+
+            categoryFilter.addEventListener('change', () => {
+                const selectedCategory = categoryFilter.value;
+                const bookList = document.getElementById('bookList');
+                const items = bookList.getElementsByTagName('li');
+                for (let i = 0; i < items.length; i++) {
+                    const item = items[i];
+                    const category = item.lastChild ? item.lastChild.textContent : '';
+                    if (selectedCategory === '' || category.includes(selectedCategory)) {
+                        item.style.display = '';
+                    } else {
+                        item.style.display = 'none';
+                    }
+                }
+            });
+        }
+
         document.addEventListener('DOMContentLoaded', () => {
             const fileInput = document.getElementById('fileInput');
+            const categoryInput = document.getElementById('categoryInput');
             const progressBar = document.getElementById('progressBar');
             const progressContainer = document.getElementById('progressContainer');
             const statusMessage = document.getElementById('statusMessage');
-
             document.getElementById('uploadButton').addEventListener('click', () => {
                 const files = fileInput.files;
-
                 if (files.length > 0) {
                     progressContainer.style.display = 'block';  // Exibe a barra de progresso
                     progressBar.value = 0;  // Reseta a barra de progresso
                     statusMessage.textContent = '';  // Limpa mensagens anteriores
-
                     for (let i = 0; i < files.length; i++) {
                         const file = files[i];
-                        const fileName = file.name.replace('.pdf', ''); 
+                        const fileName = file.name.replace('.pdf', '');
                         const fileStorageRef = storageRef(storage, `books/${file.name}`);
-
                         const uploadTask = uploadBytesResumable(fileStorageRef, file);
-
-                        // Atualiza a barra de progresso
-                        uploadTask.on('state_changed', 
+                        uploadTask.on('state_changed',
                             (snapshot) => {
                                 const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
                                 progressBar.value = progress;
-                            }, 
+                            },
                             (error) => {
                                 statusMessage.textContent = 'Erro ao fazer upload: ' + error.message;
                                 statusMessage.style.color = 'red';
                                 progressContainer.style.display = 'none'; // Esconde a barra de progresso em caso de erro
-                            }, 
+                            },
                             () => {
                                 getDownloadURL(uploadTask.snapshot.ref).then((url) => {
                                     const newBookRef = push(ref(database, 'books/'));
                                     set(newBookRef, {
                                         title: fileName,
                                         url: url,
+                                        category: categoryInput.value, // Adiciona a categoria ao livro
                                     }).then(() => {
-                                        if (i === files.length - 1) { 
-                                            fileInput.value = '';  
+                                        if (i === files.length - 1) {
+                                            fileInput.value = '';
+                                            categoryInput.value = ''; // Limpa o campo de categoria após o upload
                                             progressContainer.style.display = 'none';  // Esconde a barra de progresso após o upload
                                             statusMessage.textContent = 'Upload concluído com sucesso!';
                                             statusMessage.style.color = 'green';
-                                            loadBooks(); 
+                                            loadBooks();
                                         }
                                     });
                                 });
@@ -121,15 +147,12 @@
                 }
             });
 
-            // Função de pesquisa
             document.getElementById('search').addEventListener('input', (event) => {
                 const searchQuery = event.target.value.toLowerCase();  // Obtém o valor digitado e converte para minúsculas
                 const bookList = document.getElementById('bookList');
                 const items = bookList.getElementsByTagName('li');  // Todos os <li> dos livros
-
-                // Itera sobre todos os <li> na lista
                 for (let i = 0; i < items.length; i++) {
-                    const item = items[i];  // Pega cada <li>
+                    const item = items[i];
                     const title = item.firstChild.textContent.toLowerCase();  // Texto do título do livro
                     if (title.includes(searchQuery)) {
                         item.style.display = '';  // Mostra o item se combinar com a pesquisa
@@ -139,17 +162,15 @@
                 }
             });
 
-            loadBooks(); 
+            loadBooks();
         });
 
-        // Atualiza a pesquisa quando os livros são carregados
         function updateSearch(booksArray) {
             const searchInput = document.getElementById('search');
             searchInput.addEventListener('input', () => {
                 const searchQuery = searchInput.value.toLowerCase();
                 const bookList = document.getElementById('bookList');
                 const items = bookList.getElementsByTagName('li');
-
                 for (let i = 0; i < items.length; i++) {
                     const item = items[i];
                     const title = item.firstChild.textContent.toLowerCase();
@@ -161,7 +182,6 @@
                 }
             });
         }
-
     </script>
 </head>
 <body>
@@ -169,34 +189,43 @@
         <h1>Nossa Biblioteca</h1>
         <p>Compartilhe e baixe livros gratuitamente!</p>
         <div id="doe">
-        <h5>Doe Bitcoin</h5>
-        <p>thiagooliveirash@strike.me</p>
+            <h5>Doe Bitcoin</h5>
+            <p>thiagooliveirash@strike.me</p>
         </div>
         <div id="bookCount">0 livros</div> <!-- Contador de livros -->
     </header>
-
     <main>
         <section id="upload-section">
             <h2>Adicionar Livros</h2>
             <input type="file" id="fileInput" accept=".pdf" multiple required>
+            <input type="text" id="categoryInput" placeholder="Categoria do livro" required>
             <button id="uploadButton">Adicionar Livros</button>
-
             <!-- Barra de progresso e feedback de status -->
             <div id="progressContainer" style="display: none;">
                 <progress id="progressBar" value="0" max="100" style="width: 100%;"></progress>
             </div>
-            <p id="statusMessage"></p>  <!-- Mensagens de sucesso ou erro -->
+     <p id="statusMessage"></p>
         </section>
 
         <section id="search-section">
-            <h2>Pesquisar Livros</h2>
-            <input type="text" id="search" placeholder="Pesquise pelo título...">
+            <h2>Buscar Livros</h2>
+            <input type="text" id="search" placeholder="Pesquisar por título">
+            <select id="categoryFilter">
+                <option value="">Todas as categorias</option>
+            </select>
         </section>
 
-        <section id="books-section">
-            <h2>Livros Disponíveis</h2>
+        <section id="book-list-section">
+            <h2>Lista de Livros</h2>
             <ul id="bookList"></ul>
         </section>
+
+        <footer>
+            <h2>Contato</h2>
+            <p>Entre em contato pelo WhatsApp: 
+                <a href="https://wa.me/5511999999999" target="_blank">Clique aqui</a>
+            </p>
+        </footer>
     </main>
 </body>
 </html>
