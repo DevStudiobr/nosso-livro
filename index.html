@@ -30,6 +30,7 @@
         // Função para carregar livros do Firebase
         function loadBooks() {
             const bookList = document.getElementById('bookList');
+            const bookCount = document.getElementById('bookCount');
             bookList.innerHTML = ''; // Limpa a lista antes de carregar
 
             // Obtendo os livros do Firebase
@@ -40,6 +41,9 @@
                     const bookData = childSnapshot.val();
                     booksArray.push({ key: childSnapshot.key, ...bookData });
                 });
+
+                // Atualiza a contagem de livros
+                bookCount.textContent = `${booksArray.length} livros`; // Atualiza a contagem
 
                 // Preenche a lista com os livros
                 booksArray.forEach((book) => {
@@ -61,68 +65,61 @@
 
         // Função para fazer upload de livros
         document.addEventListener('DOMContentLoaded', () => {
+            const fileInput = document.getElementById('fileInput');
+
             document.getElementById('uploadButton').addEventListener('click', () => {
-                const fileInput = document.getElementById('fileInput');
-                const bookTitle = document.getElementById('bookTitle').value;
+                const files = fileInput.files;  // Obtendo todos os arquivos selecionados
 
-                if (fileInput.files.length > 0 && bookTitle) {
-                    const file = fileInput.files[0];
-                    const fileStorageRef = storageRef(storage, `books/${file.name}`);
+                if (files.length > 0) {
+                    // Itera sobre os arquivos selecionados
+                    for (let i = 0; i < files.length; i++) {
+                        const file = files[i];
+                        const fileName = file.name.replace('.pdf', ''); // Retira a extensão .pdf
+                        const fileStorageRef = storageRef(storage, `books/${file.name}`);
 
-                    // Fazendo o upload do arquivo
-                    uploadBytes(fileStorageRef, file).then(() => {
-                        // Obtendo a URL do livro após o upload
-                        getDownloadURL(fileStorageRef).then((url) => {
-                            // Adicionando dados do livro ao Firebase
-                            const newBookRef = push(ref(database, 'books/'));
-                            set(newBookRef, {
-                                title: bookTitle,
-                                url: url,
-                            }).then(() => {
-                                // Limpando os campos
-                                fileInput.value = '';
-                                document.getElementById('bookTitle').value = '';
-                                loadBooks(); // Recarregar lista de livros
+                        // Fazendo o upload de cada arquivo
+                        uploadBytes(fileStorageRef, file).then(() => {
+                            // Obtendo a URL do livro após o upload
+                            getDownloadURL(fileStorageRef).then((url) => {
+                                // Adicionando dados do livro ao Firebase
+                                const newBookRef = push(ref(database, 'books/'));
+                                set(newBookRef, {
+                                    title: fileName,
+                                    url: url,
+                                }).then(() => {
+                                    // Recarregar lista de livros após o upload
+                                    if (i === files.length - 1) {  // Verifica se é o último arquivo
+                                        fileInput.value = '';  // Limpa o input de arquivos
+                                        loadBooks(); // Recarregar a lista de livros após todos os uploads
+                                    }
+                                });
                             });
                         });
-                    });
+                    }
                 } else {
-                    alert('Por favor, preencha todos os campos.');
+                    alert('Por favor, selecione pelo menos um arquivo.');
                 }
             });
 
-            // Função para pesquisar livros
+            // Função de pesquisa
             document.getElementById('search').addEventListener('input', (event) => {
-                const searchQuery = event.target.value.toLowerCase();
+                const searchQuery = event.target.value.toLowerCase();  // Obtém o valor digitado e converte para minúsculas
                 const bookList = document.getElementById('bookList');
-                const items = bookList.getElementsByTagName('li');
+                const items = bookList.getElementsByTagName('li');  // Todos os <li> dos livros
 
+                // Itera sobre todos os <li> na lista
                 for (let i = 0; i < items.length; i++) {
-                    const item = items[i];
-                    const title = item.textContent.toLowerCase();
+                    const item = items[i];  // Pega cada <li>
+                    const title = item.textContent.toLowerCase();  // Texto do título do livro
                     if (title.includes(searchQuery)) {
-                        item.style.display = ''; // Mostrar item
+                        item.style.display = '';  // Mostra o item se combinar com a pesquisa
                     } else {
-                        item.style.display = 'none'; // Esconder item
+                        item.style.display = 'none';  // Esconde o item se não combinar
                     }
                 }
             });
 
-            // Função para rastrear usuários online
-            const userRef = ref(database, 'users/' + Math.random().toString(36).substr(2, 9));
-            set(userRef, { online: true });
-
-            onValue(ref(database, 'users'), (snapshot) => {
-                const onlineCount = snapshot.numChildren();
-                document.getElementById('onlineCount').textContent = onlineCount;
-            });
-
             loadBooks(); // Carregar livros ao iniciar
-        });
-
-        // Remover usuário da lista quando sair
-        window.addEventListener('beforeunload', () => {
-            set(userRef, null); // Remove o usuário do Firebase
         });
     </script>
 </head>
@@ -130,15 +127,15 @@
     <header>
         <h1>Nossa Biblioteca</h1>
         <p>Compartilhe e baixe livros gratuitamente!</p>
-        <div id="onlineCount">0 online</div> <!-- Contador de usuários online -->
+        <div id="bookCount">0 livros</div> <!-- Contador de livros disponíveis -->
     </header>
 
     <main>
         <section id="upload-section">
-            <h2>Adicionar Livro</h2>
-            <input type="text" id="bookTitle" placeholder="Título do Livro" required>
-            <input type="file" id="fileInput" accept=".pdf" required>
-            <button id="uploadButton">Adicionar Livro</button>
+            <h2>Adicionar Livros</h2>
+            <!-- Agora aceita múltiplos arquivos -->
+            <input type="file" id="fileInput" accept=".pdf" multiple required>
+            <button id="uploadButton">Adicionar Livros</button>
         </section>
 
         <section id="search-section">
