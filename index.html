@@ -40,6 +40,11 @@
                     booksArray.push({ key: childSnapshot.key, ...bookData });
                 });
 
+                // Atualiza a contagem de livros
+                const bookCount = document.getElementById('bookCount');
+                bookCount.textContent = `${booksArray.length} livros`;
+
+                // Preenche a lista com os livros
                 booksArray.forEach((book) => {
                     const li = document.createElement('li');
                     li.textContent = book.title || "Título não disponível"; 
@@ -54,9 +59,8 @@
                     bookList.appendChild(li);
                 });
 
-                // Atualiza a contagem de livros
-                const bookCount = document.getElementById('bookCount');
-                bookCount.textContent = `${booksArray.length} livros`;
+                // Atualiza a pesquisa
+                updateSearch(booksArray);
             });
         }
 
@@ -117,8 +121,47 @@
                 }
             });
 
+            // Função de pesquisa
+            document.getElementById('search').addEventListener('input', (event) => {
+                const searchQuery = event.target.value.toLowerCase();  // Obtém o valor digitado e converte para minúsculas
+                const bookList = document.getElementById('bookList');
+                const items = bookList.getElementsByTagName('li');  // Todos os <li> dos livros
+
+                // Itera sobre todos os <li> na lista
+                for (let i = 0; i < items.length; i++) {
+                    const item = items[i];  // Pega cada <li>
+                    const title = item.firstChild.textContent.toLowerCase();  // Texto do título do livro
+                    if (title.includes(searchQuery)) {
+                        item.style.display = '';  // Mostra o item se combinar com a pesquisa
+                    } else {
+                        item.style.display = 'none';  // Esconde o item se não combinar
+                    }
+                }
+            });
+
             loadBooks(); 
         });
+
+        // Atualiza a pesquisa quando os livros são carregados
+        function updateSearch(booksArray) {
+            const searchInput = document.getElementById('search');
+            searchInput.addEventListener('input', () => {
+                const searchQuery = searchInput.value.toLowerCase();
+                const bookList = document.getElementById('bookList');
+                const items = bookList.getElementsByTagName('li');
+
+                for (let i = 0; i < items.length; i++) {
+                    const item = items[i];
+                    const title = item.firstChild.textContent.toLowerCase();
+                    if (title.includes(searchQuery)) {
+                        item.style.display = '';
+                    } else {
+                        item.style.display = 'none';
+                    }
+                }
+            });
+        }
+
     </script>
 </head>
 <body>
@@ -139,6 +182,11 @@
                 <progress id="progressBar" value="0" max="100" style="width: 100%;"></progress>
             </div>
             <p id="statusMessage"></p>  <!-- Mensagens de sucesso ou erro -->
+        </section>
+
+        <section id="search-section">
+            <h2>Pesquisar Livros</h2>
+            <input type="text" id="search" placeholder="Pesquise pelo título...">
         </section>
 
         <section id="books-section">
